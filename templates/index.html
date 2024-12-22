@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Digit Recognizer</title>
+    <style>
+        body { text-align: center; font-family: Arial, sans-serif; }
+        canvas { border: 2px solid black; cursor: crosshair; }
+        #output { margin-top: 20px; font-size: 24px; color: red; }
+        #clear-button { margin-top: 10px; padding: 10px 20px; font-size: 18px; }
+    </style>
+</head>
+<body>
+    <h1>Draw a Digit</h1>
+    <canvas id="canvas" width="280" height="280"></canvas>
+    <br>
+    <button id="clear-button">Clear</button>
+    <div id="output">Prediction: <span id="prediction">None</span></div>
+
+    <script>
+        const canvas = document.getElementById("canvas");
+        const ctx = canvas.getContext("2d");
+        const clearButton = document.getElementById("clear-button");
+        const predictionElement = document.getElementById("prediction");
+
+        // Set up canvas
+        ctx.fillStyle = "black";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        let drawing = false;
+
+        canvas.addEventListener("mousedown", () => { drawing = true; });
+        canvas.addEventListener("mouseup", () => { drawing = false; });
+        canvas.addEventListener("mousemove", draw);
+
+        clearButton.addEventListener("click", clearCanvas);
+
+        function draw(event) {
+            if (!drawing) return;
+            const rect = canvas.getBoundingClientRect();
+            const x = event.clientX - rect.left;
+            const y = event.clientY - rect.top;
+
+            ctx.fillStyle = "white";
+            ctx.beginPath();
+            ctx.arc(x, y, 10, 0, Math.PI * 2);
+            ctx.fill();
+        }
+
+        function clearCanvas() {
+            ctx.fillStyle = "black";
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            predictionElement.textContent = "None";
+        }
+
+        canvas.addEventListener("mouseup", async () => {
+            const imageData = canvas.toDataURL("image/png").split(",")[1];
+            const response = await fetch("/predict", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ image: imageData }),
+            });
+
+            const result = await response.json();
+            if (result.label) {
+                predictionElement.textContent = result.label;
+            } else {
+                predictionElement.textContent = "Error: " + result.error;
+            }
+        });
+    </script>
+</body>
+</html>
