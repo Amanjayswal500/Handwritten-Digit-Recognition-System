@@ -7,7 +7,7 @@ import base64
 import os
 
 app = Flask(__name__)
-MODEL = load_model("bestmodel.keras")
+MODEL = load_model("mnist_model.pkl")
 LABELS = {
     0: "Zero",
     1: "One",
